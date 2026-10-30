@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "artifacts": [
+    "result.csv"
+  ],
+  "requirements": [
+    {
+      "id": "DEMO-R1",
+      "criterion": "Synthetic format example: output total equals the sum of input values; not a real verification claim.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "verification.txt",
+          "sha256": "650f337278878de7322dcbf3748346ce053d563d3346a52a6b7a4c757ab39480",
+          "command": "python3 -c \"import csv; from pathlib import Path; rows=list(csv.DictReader(Path('input.csv').open())); result=list(csv.DictReader(Path('result.csv').open())); assert sum(int(row['value']) for row in rows)==int(result[0]['total'])\"",
+          "exit_code": 0,
+          "inputs": [
+            {
+              "path": "input.csv",
+              "sha256": "487c9ac92cce15173d1667e0aabb9b61ff3b30872797ffc98a0ac313bc1aa260"
+            },
+            {
+              "path": "result.csv",
+              "sha256": "58bf3d880d150c6ab4c2bb1e4dab6a6896741a5106617c5936ea0ddcdafad84e"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

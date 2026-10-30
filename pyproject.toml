@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling>=1.26,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clarity-wiki"
+version = "0.3.0"
+description = "Local revision and evidence checks with a Korean Codex Skill"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "Clarity Wiki contributors"}]
+dependencies = []
+
+[project.optional-dependencies]
+mcp = ["mcp==1.30.0"]
+
+[project.scripts]
+clarity-wiki = "clarity_wiki.cli:main"
+clarity-wiki-mcp = "clarity_wiki.mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["skills/clarity-wiki/scripts/clarity_wiki"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/skills/clarity-wiki", "/tests", "/README.md", "/LICENSE", "/pyproject.toml"]
+exclude = ["**/._*", "**/__pycache__", "**/*.egg-info"]
