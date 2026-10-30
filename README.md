@@ -8,6 +8,8 @@
 
 사전 체험에서는 [QUICKSTART](QUICKSTART.md)의 설치 명령·Codex 시작 프롬프트·정상 작동 확인 순서를 그대로 따라가세요.
 
+Skill과 로컬 MCP를 함께 설치하려면 과제 작업 폴더에서 `python3 /저장소의/절대경로/tools/install.py --root "$PWD"`를 실행합니다. [설치 스크립트](tools/install.py)가 전용 가상환경에 SDK를 설치하고 절대 경로의 연결 JSON을 출력합니다. 공개 저장소를 가져오는 명령부터는 [한 번에 설치](QUICKSTART.md#0-skillmcp-한-번에-설치)를 참고하세요. JSON 등록은 제공 MCP 호스트에서 진행합니다.
+
 공개 저장소를 내려받고 저장소 폴더에서 실행합니다.
 
 ```bash

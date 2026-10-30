@@ -4,6 +4,31 @@
 
 필요 환경은 Git, Python 3.10 이상, POSIX 파일 읽기를 지원하는 macOS/Linux다. 제공 Codex는 업데이트하지 않으며 개인 계정·API 키를 연결하지 않는다. 이 문서는 [시험 환경 프로필](skills/clarity-wiki/references/shared/exam-boundaries.md)의 운영 메일·기존 가이드 제한을 함께 따른다.
 
+## 0. Skill·MCP 한 번에 설치
+
+둘 다 설치하려면 웹 IDE의 **과제 작업 폴더**에서 아래 블록을 실행한다. Skill만 먼저 확인하려면 1번의 수동 설치를 사용한다.
+
+```bash
+CW_SETUP_SRC="$(mktemp -d)" &&
+git clone --depth 1 --quiet https://github.com/dailykim149656-source/clarity-wiki.git "$CW_SETUP_SRC" &&
+python3 "$CW_SETUP_SRC/tools/install.py" --root "$PWD"
+```
+
+이미 이 저장소를 내려받았다면 같은 작업 폴더에서 `python3 /저장소의/절대경로/tools/install.py --root "$PWD"`로 실행할 수도 있다. `--root`를 생략하면 현재 폴더에 설치한다.
+
+설치 스크립트는 다음 작업을 순서대로 수행한다.
+
+1. 과제 폴더의 `.agents/skills/clarity-wiki`에 공개 Skill을 복사한다.
+2. 그 안의 `.venv`에 공식 MCP SDK `1.30.0`을 설치한다.
+3. SDK import·버전과 Skill 구조를 확인한다.
+4. 실제 절대 경로가 들어간 `mcpServers` 연결 JSON을 출력한다.
+
+진행 로그는 **stderr**, 성공 JSON만 **stdout**으로 출력한다. 성공 시 종료 코드는 `0`, 실패 시 `2`이며 실패하면 연결 JSON을 출력하지 않는다. SDK 설치에 실패해도 이미 복사한 Skill과 설치 없는 CLI는 사용할 수 있다. 설치에는 패키지 다운로드가 필요하다.
+
+동일 Skill에 다시 실행하면 번들 파일을 갱신하고 추가 파일·기존 가상환경은 보존한다. 내용이 있는 다른 디렉터리를 임의로 덮어쓰거나, 설치 경로의 심볼릭 링크를 따라 다른 위치로 복사하지 않는다. 원본 저장소와 설치 Skill 폴더가 겹치는 경로는 거부한다.
+
+자동 설치가 끝나면 **출력된 JSON을 제공 MCP 탭에 등록**하고 2~3번의 기본 확인, 5-3~5-4의 MCP 호출 확인을 진행한다. 기존 서버와 병합하는 방법·호스트별 JSON 형식은 5-2를 따른다. 스크립트는 과제 원본·Codex 설정 파일을 수정하거나 서버를 자동 등록하지 않는다. 실제 Cofa 연결 성공 여부는 호출 확인으로 판단한다.
+
 ## 1. 과제 작업 폴더에서 설치
 
 웹 IDE 터미널에서 과제 작업 폴더에 있는지 확인한다. 아래 설치 명령은 현재 폴더를 바꾸지 않는다.

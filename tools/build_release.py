@@ -8,7 +8,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = ['README.md', 'QUICKSTART.md', 'LICENSE', 'pyproject.toml', 'plugin.json', 'mcp.json',
-         'tools/build_release.py', 'docs/USAGE.md', 'docs/VERIFICATION.md']
+         'tools/build_release.py', 'tools/install.py', 'docs/USAGE.md', 'docs/VERIFICATION.md']
 
 
 def public_files():
