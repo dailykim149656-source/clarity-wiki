@@ -7,7 +7,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = ['README.md', 'LICENSE', 'pyproject.toml', 'plugin.json', 'mcp.json',
+FILES = ['README.md', 'QUICKSTART.md', 'LICENSE', 'pyproject.toml', 'plugin.json', 'mcp.json',
          'tools/build_release.py', 'docs/USAGE.md', 'docs/VERIFICATION.md']
 
 
