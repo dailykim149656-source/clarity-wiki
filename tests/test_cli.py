@@ -32,6 +32,17 @@ class CLITests(unittest.TestCase):
         self.assertGreater(data['total_findings'], 0)
         self.assertEqual(result.stderr, '')
 
+    def test_colon_subject_swap_returns_context_findings(self):
+        (self.root / 'old.txt').write_text('장비A: 10건, 장비B: 20건', encoding='utf-8')
+        (self.root / 'new.txt').write_text('장비B: 10건, 장비A: 20건', encoding='utf-8')
+        result = self.run_cli('audit', '--root', str(self.root), '--original', 'old.txt', '--revised', 'new.txt')
+        self.assertEqual(result.returncode, 1, result.stderr)
+        data = json.loads(result.stdout)
+        self.assertEqual(data['status'], 'findings')
+        self.assertEqual(data['total_findings'], 2)
+        self.assertEqual(data['findings'][0]['original']['context'], '장비A')
+        self.assertEqual(data['findings'][0]['revised']['context'], '장비B')
+
     def test_identical_input_returns_no_findings(self):
         result = self.run_cli('audit', '--root', str(self.root), '--original', 'old.txt', '--revised', 'old.txt')
         self.assertEqual(result.returncode, 0, result.stderr)

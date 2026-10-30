@@ -39,6 +39,8 @@ class MCPTransportTests(unittest.IsolatedAsyncioTestCase):
                 root = Path(directory)
                 (root / 'old.txt').write_text('온도 -5°C', encoding='utf-8')
                 (root / 'new.txt').write_text('온도 5°C', encoding='utf-8')
+                (root / 'subjects-old.txt').write_text('장비A: 10건, 장비B: 20건', encoding='utf-8')
+                (root / 'subjects-new.txt').write_text('장비B: 10건, 장비A: 20건', encoding='utf-8')
                 (root / 'result.txt').write_text('synthetic result', encoding='utf-8')
                 digest = lambda name: hashlib.sha256((root / name).read_bytes()).hexdigest()
                 document = {'version': 1, 'artifacts': ['result.txt'], 'requirements': [{
@@ -65,6 +67,13 @@ class MCPTransportTests(unittest.IsolatedAsyncioTestCase):
                         evidence = await session.call_tool('check_evidence', {'manifest': 'manifest.json'})
                         self.assertFalse(evidence.isError)
                         self.assertEqual(evidence.structuredContent['status'], 'no_findings')
+                        subjects = await session.call_tool('audit_revision', {
+                            'original': 'subjects-old.txt', 'revised': 'subjects-new.txt'})
+                        self.assertFalse(subjects.isError)
+                        self.assertEqual(subjects.structuredContent['total_findings'], 2)
+                        self.assertEqual(subjects.structuredContent['findings'][0]['rule'], 'NUMBER_CONTEXT_CHANGED')
+                        self.assertEqual(subjects.structuredContent['findings'][0]['original']['context'], '장비A')
+                        self.assertEqual(subjects.structuredContent['findings'][0]['revised']['context'], '장비B')
                         for arguments in [
                             {'original': '../private.txt', 'revised': 'new.txt'},
                             {'original': 'old.txt', 'revised': 'new.txt', 'limit': 31},

@@ -45,6 +45,37 @@ class RevisionAuditTests(unittest.TestCase):
         result = self.audit("A10%, B20%", "B10%, A20%")
         self.assertIn("NUMBER_CONTEXT_CHANGED", [f["rule"] for f in result["findings"]])
 
+    def test_subject_swap_after_colon_equals_or_spaces_is_flagged(self):
+        for separator in (': ', ':', ' = ', '=', ' '):
+            with self.subTest(separator=separator):
+                result = self.audit(f'장비A{separator}10건, 장비B{separator}20건',
+                                    f'장비B{separator}10건, 장비A{separator}20건')
+                self.assertEqual('findings', result['status'])
+                self.assertEqual(2, result['total_findings'])
+                self.assertEqual(['NUMBER_CONTEXT_CHANGED', 'NUMBER_CONTEXT_CHANGED'],
+                                 [item['rule'] for item in result['findings']])
+                self.assertEqual(('장비A', '장비B'),
+                                 (result['findings'][0]['original']['context'],
+                                  result['findings'][0]['revised']['context']))
+
+    def test_subject_swap_with_space_inside_label_is_flagged(self):
+        result = self.audit('장비 A 10건, 장비 B 20건', '장비 B 10건, 장비 A 20건')
+        self.assertEqual(2, result['total_findings'])
+        self.assertTrue(all(item['rule'] == 'NUMBER_CONTEXT_CHANGED' for item in result['findings']))
+
+    def test_subject_separator_formatting_does_not_create_findings(self):
+        for before, after in [
+            ('A10%, B20%', 'A: 10%, B: 20%'),
+            ('장비A: 10건, 장비B: 20건', '장비A = 10건, 장비B=20건'),
+            ('장비 A 10건, 장비 B 20건', '장비 A:10건, 장비 B = 20건'),
+        ]:
+            with self.subTest(before=before):
+                self.assertEqual(0, self.audit(before, after)['total_findings'])
+
+    def test_subject_separator_does_not_cross_newline(self):
+        result = self.audit('장비A:\n10건', '장비B:\n10건')
+        self.assertEqual(0, result['total_findings'])
+
     def test_repeated_number_removed(self):
         result = self.audit("10 10 10", "10 10")
         self.assertIn("NUMBER_REMOVED", [f["rule"] for f in result["findings"]])

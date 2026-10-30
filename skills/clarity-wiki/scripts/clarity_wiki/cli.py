@@ -19,7 +19,7 @@ def main(argv=None) -> int:
     audit = subparsers.add_parser('audit', help='Find numerical and quoted-text revision candidates.')
     audit.add_argument('--original', required=True)
     audit.add_argument('--revised', required=True)
-    evidence = subparsers.add_parser('evidence', help='Inspect a version 1 evidence manifest.')
+    evidence = subparsers.add_parser('evidence', help='Inspect manifest structure and declared hashes; does not run tests.')
     evidence.add_argument('--manifest', required=True)
     for command in [audit, evidence]:
         command.add_argument('--root', required=True, help='Allowed workspace root; inputs are relative to this root.')

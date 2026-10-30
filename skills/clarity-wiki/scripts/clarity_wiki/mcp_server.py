@@ -39,7 +39,7 @@ def build_server(workspace: Workspace):
     @server.tool(annotations=annotations, structured_output=True)
     def check_evidence(manifest: str,
                        limit: Annotated[int, Field(ge=1, le=30, strict=True)] = 5) -> dict[str, Any]:
-        """Check declared manifest-v1 evidence and file hashes; never execute or certify commands."""
+        """Inspect manifest-v1 structure and declared hashes; never execute or certify commands."""
         try:
             return inspect_evidence(workspace, manifest, limit)
         except InputError as error:

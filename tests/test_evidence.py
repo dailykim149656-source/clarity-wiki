@@ -68,6 +68,17 @@ class EvidenceTests(unittest.TestCase):
         self.write("result.csv", b"")
         self.assert_findings(self.check(), "empty_artifact")
 
+    def test_artifact_without_declared_snapshot_does_not_detect_content_change(self):
+        self.write('result.csv', b'answer\n99\n')
+        self.assertEqual(self.check()['status'], 'no_findings')
+
+    def test_artifact_bound_as_inspected_input_detects_content_change(self):
+        evidence = self.manifest['requirements'][0]['evidence'][0]
+        evidence['inputs'].append({'path': 'result.csv', 'sha256': self.hash('result.csv')})
+        self.assertEqual(self.check()['status'], 'no_findings')
+        self.write('result.csv', b'answer\n99\n')
+        self.assert_findings(self.check(), 'stale_input')
+
     def test_missing_empty_and_stale_evidence(self):
         (self.root / "verification.txt").unlink()
         self.assert_findings(self.check(), "missing_evidence")

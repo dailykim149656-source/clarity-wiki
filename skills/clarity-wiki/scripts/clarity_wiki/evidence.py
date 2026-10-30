@@ -12,7 +12,9 @@ _MAX_FILES = 256
 _MAX_TOTAL_BYTES = 64 * 1024 * 1024
 _LIMITATIONS = (
     "This inspection checks manifest structure, file presence, and declared SHA-256 "
-    "snapshots. It does not execute commands or authenticate claimed statuses, exit "
+    "snapshots. Artifact-only paths are checked for presence and nonempty content; "
+    "content changes require an explicitly declared hash. It does not execute "
+    "commands or authenticate claimed statuses, exit "
     "codes, test execution, human review, or semantic/business correctness. Matching "
     "hashes establish consistency with the supplied manifest, not independent proof "
     "of freshness or completeness. Files may change after inspection."

@@ -16,7 +16,7 @@ _NUMBER = re.compile(
     r"(?P<unit>[ \t]*(?:[A-Za-zµμ°℃℉%‰]+|시간|개월|킬로그램|미터|"
     r"퍼센트|백만원|만원|천원|억원|건|회|명|개|원|년|월|일|분|초|주|배|대|톤))?"
 )
-_SUBJECT = re.compile(r"[^\W\d_]+$", re.UNICODE)
+_SUBJECT = re.compile(r"([^\W\d_]+)(?:[ \t]*[:=])?\Z", re.UNICODE)
 _LOOKAHEAD = 8
 _LIMITATION = (
     "This heuristic compares numeric tokens, short preceding subject contexts, "
@@ -45,7 +45,7 @@ def _numbers(text: str) -> list[_Token]:
         subject = _SUBJECT.search(prefix)
         tokens.append(_Token(match.start(), match.group(),
                              (number, raw_unit.strip()),
-                             subject.group() if subject else ""))
+                             subject.group(1) if subject else ""))
     return tokens
 
 
