@@ -156,6 +156,24 @@ class InstallTests(unittest.TestCase):
         self.assertIn('SDK unavailable', stderr.getvalue())
         self.assertTrue((self.destination / 'SKILL.md').is_file())
 
+    def test_failed_post_install_check_produces_no_connection_json(self):
+        (self.source / 'tools/check_mcp.py').write_text(
+            'from pathlib import Path\nPath(__file__).with_suffix(".ran").write_text("called")\nraise SystemExit(2)\n',
+            encoding='utf-8')
+        stdout = io.StringIO()
+        with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as stderr, \
+                patch.object(self.installer, 'SOURCE_SKILL', self.source), \
+                patch.object(self.installer, 'install_mcp', return_value=Path(sys.executable)), \
+                contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            code = self.installer.main(['--root', str(self.root), '--check'])
+            stderr.seek(0)
+            message = stderr.read()
+        self.assertEqual(code, 2)
+        self.assertEqual(stdout.getvalue(), '')
+        self.assertIn('Installation failed', message)
+        self.assertTrue((self.destination / 'tools/check_mcp.ran').is_file())
+        self.assertTrue((self.destination / 'SKILL.md').is_file())
+
     def test_invalid_workspace_produces_no_json(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):

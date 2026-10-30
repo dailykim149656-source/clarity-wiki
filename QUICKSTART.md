@@ -6,28 +6,51 @@
 
 ## 0. Skill·MCP 한 번에 설치
 
-둘 다 설치하려면 웹 IDE의 **과제 작업 폴더**에서 아래 블록을 실행한다. Skill만 먼저 확인하려면 1번의 수동 설치를 사용한다.
+둘 다 설치하고 MCP 호출까지 자동 점검하려면 웹 IDE의 **과제 작업 폴더**에서 아래 블록을 실행한다. Skill만 먼저 확인하려면 1번의 수동 설치를 사용한다.
 
 ```bash
 CW_SETUP_SRC="$(mktemp -d)" &&
 git clone --depth 1 --quiet https://github.com/dailykim149656-source/clarity-wiki.git "$CW_SETUP_SRC" &&
-python3 "$CW_SETUP_SRC/tools/install.py" --root "$PWD"
+python3 "$CW_SETUP_SRC/tools/install.py" --root "$PWD" --check
 ```
 
-이미 이 저장소를 내려받았다면 같은 작업 폴더에서 `python3 /저장소의/절대경로/tools/install.py --root "$PWD"`로 실행할 수도 있다. `--root`를 생략하면 현재 폴더에 설치한다.
+이미 이 저장소를 내려받았다면 같은 작업 폴더에서 `python3 /저장소의/절대경로/tools/install.py --root "$PWD" --check`로 실행할 수도 있다. `--root`를 생략하면 현재 폴더에 설치한다. `--check`를 생략하면 설치·구조 검사·연결 JSON 출력까지만 진행한다.
 
 설치 스크립트는 다음 작업을 순서대로 수행한다.
 
 1. 과제 폴더의 `.agents/skills/clarity-wiki`에 공개 Skill을 복사한다.
 2. 그 안의 `.venv`에 공식 MCP SDK `1.30.0`을 설치한다.
 3. SDK import·버전과 Skill 구조를 확인한다.
-4. 실제 절대 경로가 들어간 `mcpServers` 연결 JSON을 출력한다.
+4. `--check`가 있으면 임시 합성 파일로 서버 초기화·도구 목록·`audit_revision`·`check_evidence`를 실제 MCP stdio로 점검하고 파일을 정리한다.
+5. 실제 절대 경로가 들어간 `mcpServers` 연결 JSON을 출력한다.
 
-진행 로그는 **stderr**, 성공 JSON만 **stdout**으로 출력한다. 성공 시 종료 코드는 `0`, 실패 시 `2`이며 실패하면 연결 JSON을 출력하지 않는다. SDK 설치에 실패해도 이미 복사한 Skill과 설치 없는 CLI는 사용할 수 있다. 설치에는 패키지 다운로드가 필요하다.
+진행 로그와 점검 보고서는 **stderr**, 성공한 연결 JSON만 **stdout**으로 출력한다. 성공 시 종료 코드는 `0`, 설치·점검 실패 시 `2`이며 실패하면 연결 JSON을 출력하지 않는다. SDK 설치에 실패해도 이미 복사한 Skill과 설치 없는 CLI는 사용할 수 있다. 설치에는 패키지 다운로드가 필요하다.
 
 동일 Skill에 다시 실행하면 번들 파일을 갱신하고 추가 파일·기존 가상환경은 보존한다. 내용이 있는 다른 디렉터리를 임의로 덮어쓰거나, 설치 경로의 심볼릭 링크를 따라 다른 위치로 복사하지 않는다. 원본 저장소와 설치 Skill 폴더가 겹치는 경로는 거부한다.
 
 자동 설치가 끝나면 **출력된 JSON을 제공 MCP 탭에 등록**하고 2~3번의 기본 확인, 5-3~5-4의 MCP 호출 확인을 진행한다. 기존 서버와 병합하는 방법·호스트별 JSON 형식은 5-2를 따른다. 스크립트는 과제 원본·Codex 설정 파일을 수정하거나 서버를 자동 등록하지 않는다. 실제 Cofa 연결 성공 여부는 호출 확인으로 판단한다.
+
+### 0-1. 설치 후 MCP만 다시 점검
+
+최신 설치 명령을 한 번 실행했다면 [점검 스크립트](skills/clarity-wiki/tools/check_mcp.py)가 Skill에 함께 들어 있다. 같은 과제 작업 폴더에서 아래 명령으로 언제든 재점검한다. 추가 패키지 다운로드 없이 설치된 가상환경의 Python을 사용한다.
+
+```bash
+.agents/skills/clarity-wiki/.venv/bin/python \
+  .agents/skills/clarity-wiki/tools/check_mcp.py --root "$PWD"
+```
+
+단독 실행은 stdout에 점검 보고서 JSON을 출력한다. `status: passed`, `scope: local_stdio`, 종료 코드 `0`과 다음 네 항목의 `status: passed`가 성공 기준이다.
+
+| 점검 항목 | 성공 기준 |
+|---|---|
+| `initialize` | 실제 서버 초기화 성공 |
+| `tools/list` | `audit_revision`, `check_evidence` 두 도구 확인 |
+| `audit_revision` | 합성 부호 변경에 `findings`·`NUMBER_CHANGED`·1개 이상 반환 |
+| `check_evidence` | 합성 manifest·해시에 `no_findings`·0개 반환 |
+
+SDK 누락·서버 시작 실패·도구 오류·예상과 다른 응답·시간 초과는 `status: failed`, 종료 코드 `2`로 보고한다. `stage`와 `error`에서 실패 위치와 이유를 확인한다. 기본 점검 제한은 30초이고 `--timeout 60`처럼 바꿀 수 있다. 시간 초과 시 서버 종료와 정리에 필요한 시간이 추가될 수 있다.
+
+점검기는 작업 폴더에 고유한 `.clarity-mcp-check-*` 임시 디렉터리만 만들고 정상 종료·오류·시간 초과 시 정리한다. 합성 기록은 제출 근거로 사용하지 않는다. 이 결과는 독립 클라이언트의 로컬 stdio 연결 검증이다. Codex·Cofa에 등록한 연결은 5-4에서 별도로 확인한다. MCP 설정에 등록할 연결 JSON은 0번 설치 명령의 stdout을 사용한다.
 
 ## 1. 과제 작업 폴더에서 설치
 

@@ -8,7 +8,9 @@
 
 사전 체험에서는 [QUICKSTART](QUICKSTART.md)의 설치 명령·Codex 시작 프롬프트·정상 작동 확인 순서를 그대로 따라가세요.
 
-Skill과 로컬 MCP를 함께 설치하려면 과제 작업 폴더에서 `python3 /저장소의/절대경로/tools/install.py --root "$PWD"`를 실행합니다. [설치 스크립트](tools/install.py)가 전용 가상환경에 SDK를 설치하고 절대 경로의 연결 JSON을 출력합니다. 공개 저장소를 가져오는 명령부터는 [한 번에 설치](QUICKSTART.md#0-skillmcp-한-번에-설치)를 참고하세요. JSON 등록은 제공 MCP 호스트에서 진행합니다.
+Skill과 로컬 MCP를 함께 설치하려면 과제 작업 폴더에서 `python3 /저장소의/절대경로/tools/install.py --root "$PWD" --check`를 실행합니다. [설치 스크립트](tools/install.py)가 전용 가상환경에 SDK를 설치하고, `--check`로 두 도구를 실제 호출한 뒤 절대 경로의 연결 JSON을 출력합니다. 공개 저장소를 가져오는 명령부터는 [한 번에 설치](QUICKSTART.md#0-skillmcp-한-번에-설치)를 참고하세요. JSON 등록은 제공 MCP 호스트에서 진행합니다.
+
+설치 후 재점검은 `.agents/skills/clarity-wiki/.venv/bin/python .agents/skills/clarity-wiki/tools/check_mcp.py --root "$PWD"`로 실행합니다. [점검 스크립트](skills/clarity-wiki/tools/check_mcp.py)는 합성 파일을 만들고 정리하며, 실제 MCP 초기화·두 도구 호출 결과를 JSON으로 보고합니다. 성공은 종료 코드 `0`, 실패는 `2`입니다. Codex·Cofa의 설정 등록 상태는 별도로 확인해야 합니다.
 
 공개 저장소를 내려받고 저장소 폴더에서 실행합니다.
 

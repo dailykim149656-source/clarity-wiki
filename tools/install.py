@@ -127,6 +127,7 @@ def mcp_config(root: Path, skill: Path) -> dict:
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, default=Path.cwd(), help='Existing project folder; defaults to cwd')
+    parser.add_argument('--check', action='store_true', help='Call both MCP tools before emitting connection JSON')
     args = parser.parse_args(argv)
     try:
         if sys.version_info < (3, 10) or os.name != 'posix':
@@ -136,8 +137,10 @@ def main(argv=None):
             raise InstallError('Workspace must be an existing directory')
         skill = install_skill(SOURCE_SKILL, root)
         print(f'[clarity-wiki] Skill installed: {skill}', file=sys.stderr, flush=True)
-        install_mcp(skill)
+        interpreter = install_mcp(skill)
         _run([sys.executable, str(skill / 'tools/validate.py')], timeout=30)
+        if args.check:
+            _run([str(interpreter), str(skill / 'tools/check_mcp.py'), '--root', str(root)], timeout=60)
         print('[clarity-wiki] SDK and Skill validated; register the following JSON in the allowed MCP host.',
               file=sys.stderr, flush=True)
         print(json.dumps(mcp_config(root, skill), ensure_ascii=False, indent=2))
