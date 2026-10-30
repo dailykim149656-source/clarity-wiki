@@ -66,6 +66,6 @@ python3 tools/build_release.py
 
 MCP SDK가 없는 환경에서는 transport 테스트가 생략됩니다. extra 설치 후 같은 명령을 실행하면 실제 SDK client/server stdio 왕복까지 검사합니다. [검증 범위](docs/VERIFICATION.md)에 실행 결과와 한계를 기록합니다. 릴리스 ZIP은 명시한 공개 소스만 담고 SHA-256 파일을 생성합니다. 원본 ZIP·규정 PDF·개인 프로필·조사 기록·캐시는 제외합니다.
 
-대회 조건은 [환경 프로필](skills/clarity-wiki/references/shared/exam-boundaries.md)에 분리했습니다. 본인이 사전 공개한 도구의 인정 여부와 실제 호스트 설치 가능 여부는 확인 대상입니다. 후속 서술형에서는 AI 기능을 사용하지 않습니다.
+대회 조건은 2026-10-30 제공 운영 메일을 반영한 [환경 프로필](skills/clarity-wiki/references/shared/exam-boundaries.md)에 분리했습니다. **사용하는 저장소는 2차 예선 결과 통지 전까지 공개로 유지**하고, **제공 Codex는 업데이트하지 않습니다**. 공개 자료는 기존 가이드의 허용 범위에서 활용하며 외부 자료로 결과물 전체를 대체할 수 없습니다. 실제 호스트 설치·실행은 사전 체험에서 확인합니다. [체험 순서](docs/USAGE.md#대회-사전-체험과-운영)대로 Skill·CLI부터 확인하고, 후속 서술형에서는 AI 기능을 사용하지 않습니다.
 
 새로 작성한 코드·문서는 MIT 라이선스입니다. 방법론 출처와 재배포 경계는 [SOURCES](skills/clarity-wiki/SOURCES.md)를 참고하세요.
