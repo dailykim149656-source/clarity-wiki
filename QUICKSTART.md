@@ -1,6 +1,6 @@
 # Clarity Wiki 사전 체험 빠른 시작
 
-갱신일: 2026-10-30 (Asia/Seoul). 사전 체험에서 설치하고 정상 작동을 확인하는 순서다. **감독 앱·촬영 연결을 먼저 확인한 뒤 Skill과 CLI를 점검한다.** MCP는 시간이 남을 때 선택적으로 확인한다.
+갱신일: 2026-10-30 (Asia/Seoul). 사전 체험에서 설치하고 정상 작동을 확인하는 순서다. **감독 앱·촬영 연결을 먼저 확인한 뒤 Skill과 CLI를 점검한다.** MCP는 시간이 남을 때 [5번의 선택 연결](#5-선택-로컬-mcp-연결)을 확인한다.
 
 필요 환경은 Git, Python 3.10 이상, POSIX 파일 읽기를 지원하는 macOS/Linux다. 제공 Codex는 업데이트하지 않으며 개인 계정·API 키를 연결하지 않는다. 이 문서는 [시험 환경 프로필](skills/clarity-wiki/references/shared/exam-boundaries.md)의 운영 메일·기존 가이드 제한을 함께 따른다.
 
@@ -113,7 +113,138 @@ python3 .agents/skills/clarity-wiki/tools/clarity.py audit \
 
 출력 JSON에 `status: findings`, `findings` 안에 `rule: NUMBER_CHANGED`가 있으면 정상적으로 변경을 감지한 것이다. **이 검사에서 종료 코드 `1`은 정상적인 경고 결과다.** 종료 코드 `2`는 잘못된 입력이며 검사 성공이 아니다.
 
-## 5. 본 응시 시작 프롬프트
+## 5. 선택: 로컬 MCP 연결
+
+1~3번의 Skill·CLI 확인을 마친 같은 작업 폴더에서 진행한다. 여기서는 복사한 Skill의 MCP 런처를 사용하며 **제공 Codex 버전은 그대로 유지**한다. MCP 설치에 필요한 패키지 다운로드와 실행 중의 로컬 stdio 통신은 구분한다. 검사 서버는 외부 LLM·API 키·HTTP 서버를 사용하지 않는다.
+
+### 5-1. 전용 Python 환경에 SDK 설치
+
+웹 IDE 터미널에서 실행한다. [공식 MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk/tree/v1.30.0) 버전은 패키지의 optional dependency와 같은 `1.30.0`으로 고정한다.
+
+```bash
+python3 -m venv .agents/skills/clarity-wiki/.venv &&
+.agents/skills/clarity-wiki/.venv/bin/python -m pip install 'mcp==1.30.0' &&
+.agents/skills/clarity-wiki/.venv/bin/python -c 'from importlib.metadata import version; print(version("mcp"))'
+```
+
+마지막 출력이 `1.30.0`이면 SDK 설치를 확인한 것이다. 아직 MCP 호스트 연결이나 도구 호출을 검증한 것은 아니다. 설치가 허용되지 않거나 실패하면 기존 CLI로 진행한다.
+
+### 5-2. 실제 경로가 들어간 연결 JSON 생성
+
+같은 작업 폴더에서 아래 명령을 실행한다. 설정 파일을 변경하지 않고 **현재 프로젝트의 절대 경로를 넣은 JSON을 출력**한다.
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+root = Path.cwd().resolve()
+skill = root / ".agents/skills/clarity-wiki"
+config = {"mcpServers": {"clarity-wiki": {
+    "command": str(skill / ".venv/bin/python"),
+    "args": [str(skill / "tools/mcp_server.py"), "--root", str(root)],
+}}}
+print(json.dumps(config, ensure_ascii=False, indent=2))
+PY
+```
+
+출력 형식은 다음과 같다. 아래의 `/absolute/path/to/project`는 예시이며, **위 명령이 출력한 실제 경로의 JSON을 사용**한다.
+
+```json
+{
+  "mcpServers": {
+    "clarity-wiki": {
+      "command": "/absolute/path/to/project/.agents/skills/clarity-wiki/.venv/bin/python",
+      "args": [
+        "/absolute/path/to/project/.agents/skills/clarity-wiki/tools/mcp_server.py",
+        "--root",
+        "/absolute/path/to/project"
+      ]
+    }
+  }
+}
+```
+
+제공된 MCP 탭에서 호스트 안내에 따라 등록·저장한다.
+
+`mcpServers` 형식을 받는 경우 위 JSON을 사용한다. 서버 한 개의 객체를 요구하는 호스트에서는 `clarity-wiki` 안쪽의 `command`·`args` 객체를 사용한다. 기존 서버가 있다면 해당 설정을 보존하고 `clarity-wiki`를 추가한다. MCP 호스트에서도 같은 Python 실행 파일과 작업 폴더에 접근할 수 있어야 하며, 실제 Cofa 환경의 설정 형식과 시작 성공 여부는 사전 체험에서 확인한다.
+
+`--root`는 검사할 과제 작업 폴더다. 위 설정은 이를 명시하므로 `CLARITY_WORKSPACE_ROOT` 환경변수나 `${PLUGIN_ROOT}` 치환이 필요 없다. 호스트가 서버를 시작하며, 일반 `python3` 대신 **SDK가 설치된 가상환경의 Python**을 지정해야 한다.
+
+### 5-3. 도구 호출용 합성 입력 준비
+
+검사 경로는 모두 서버의 `--root` 기준이다. 기존 예제 manifest를 그대로 프로젝트 root에서 호출하면 내부의 `input.csv` 등을 찾지 못할 수 있다. 아래 명령은 Skill 안의 `examples/mcp-check`에 합성 파일을 복사하고 manifest의 모든 파일 경로에 작업 폴더 기준 접두사를 붙인다. 과제 원본 파일은 변경하지 않는다.
+
+```bash
+python3 - <<'PY'
+import json
+import shutil
+from pathlib import Path
+
+skill = Path(".agents/skills/clarity-wiki")
+source = skill / "examples/evidence"
+probe = skill / "examples/mcp-check"
+probe.mkdir(parents=True, exist_ok=True)
+for name in ("input.csv", "result.csv", "verification.txt"):
+    shutil.copyfile(source / name, probe / name)
+
+document = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+def prefixed(name):
+    return (probe / name).as_posix()
+document["artifacts"] = [prefixed(name) for name in document["artifacts"]]
+for requirement in document["requirements"]:
+    for evidence in requirement["evidence"]:
+        evidence["path"] = prefixed(evidence["path"])
+        for item in evidence["inputs"]:
+            item["path"] = prefixed(item["path"])
+(probe / "manifest.json").write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
+(probe / "before.txt").write_text("온도 -5°C\n", encoding="utf-8")
+(probe / "after.txt").write_text("온도 5°C\n", encoding="utf-8")
+print("READY:", probe.as_posix())
+PY
+```
+
+정상 출력은 `READY: .agents/skills/clarity-wiki/examples/mcp-check`다. 이 합성 기록은 실제 과제의 검증 근거로 제출하지 않는다.
+
+### 5-4. Codex에서 실제 MCP 호출 확인
+
+허용된 MCP 설정을 저장·연결하고, 필요하면 제공 Codex 세션을 다시 시작한다. 다음 프롬프트를 **Codex 입력창**에 붙여 넣는다.
+
+```text
+지금은 로컬 MCP 연결 확인이다.
+연결된 clarity-wiki 서버의 도구 목록에서
+audit_revision과 check_evidence 두 도구를 확인해줘.
+
+이어서 다음 인자로 각각 한 번씩 실제 MCP 도구를 호출해줘.
+
+audit_revision:
+{"original":".agents/skills/clarity-wiki/examples/mcp-check/before.txt","revised":".agents/skills/clarity-wiki/examples/mcp-check/after.txt","limit":5}
+
+check_evidence:
+{"manifest":".agents/skills/clarity-wiki/examples/mcp-check/manifest.json","limit":5}
+
+서버명, 실제 호출한 도구명, 결과의 status·total_findings와 오류 여부를 보고해줘.
+CLI나 직접 Python 실행으로 대신하지 말고,
+MCP 도구가 없거나 호출에 실패하면 연결 미확인으로 보고해줘.
+과제 파일이나 환경 설정은 변경하지 마.
+```
+
+| 확인 항목 | 정상 기준 |
+|---|---|
+| 도구 목록 | `clarity-wiki` 서버에 `audit_revision`, `check_evidence` 두 도구가 있음 |
+| 수치 변경 호출 | 오류 없이 `status: findings`, `total_findings` 1 이상, `rule: NUMBER_CHANGED` 반환 |
+| 근거 검사 호출 | 오류 없이 `status: no_findings`, `total_findings: 0` 반환 |
+
+MCP 응답이 `isError: true`이거나 실제 호출 기록이 없으면 성공으로 기록하지 않는다. MCP에서는 CLI 종료 코드 `1`을 성공 기준으로 쓰지 않고 응답의 오류 여부와 결과 필드를 확인한다. 서버가 시작됐다는 표시만으로 두 도구의 호출 성공을 대신하지 않는다.
+
+| 증상 | 확인할 것 |
+|---|---|
+| `No module named mcp` 또는 SDK 없음 | JSON의 `command`가 위 가상환경 Python인지와 SDK 설치 결과 |
+| 실행 파일·런처를 찾지 못함 | 생성한 절대 경로가 맞는지, MCP 호스트가 같은 파일 경로에 접근하는지 |
+| 근거 파일 누락·해시 경고 | 합성 입력 준비를 완료했는지, `--root`가 현재 과제 작업 폴더인지 |
+| MCP 도구가 안 보이거나 연결 실패 | 제공 설정의 저장·연결 상태 확인 후, 실패가 지속되면 CLI·수동 점검으로 전환 |
+
+## 6. 본 응시 시작 프롬프트
 
 본 응시에서 새 작업 폴더가 열리면 설치와 인식을 다시 확인한다. 사전 체험의 파일·세션이 유지된다고 가정하지 않는다. 본 과제가 시작된 뒤 아래 프롬프트를 제공 Codex에 입력한다.
 
@@ -130,4 +261,4 @@ README와 제공 자료, 기존 코드를 먼저 읽어줘.
 보고서에서는 수치·단위·조건·주장 강도를 보존해줘.
 ```
 
-사전 체험은 1회·15분이다. MCP는 기본 확인 이후 시간이 남고 허용된 설정으로 연결할 수 있을 때 [MCP 사용 안내](docs/USAGE.md#mcp-연결)에 따라 점검한다. 시험에서 사용하는 저장소는 2차 예선 결과 통지 전까지 공개로 유지하고, 시험 파일·결과·작업 이력은 외부 업로드나 Git Push를 하지 않는다. 제출 후 AI 사용 금지 확인 문제에서는 AI 지원을 중단한다.
+사전 체험은 1회·15분이다. MCP는 기본 확인 이후 시간이 남고 허용된 설정으로 연결할 수 있을 때 위 5번에 따라 점검하며, 일반적인 설정 설명은 [MCP 사용 안내](docs/USAGE.md#mcp-연결)를 참고한다. 시험에서 사용하는 저장소는 2차 예선 결과 통지 전까지 공개로 유지하고, 시험 파일·결과·작업 이력은 외부 업로드나 Git Push를 하지 않는다. 제출 후 AI 사용 금지 확인 문제에서는 AI 지원을 중단한다.
