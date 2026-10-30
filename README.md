@@ -6,20 +6,21 @@
 
 ## 바로 사용
 
-사전 체험에서는 [QUICKSTART](QUICKSTART.md)의 설치 명령·Codex 시작 프롬프트·정상 작동 확인 순서를 그대로 따라가세요.
+**과제를 시작하려면 [START_HERE](START_HERE.md)의 프롬프트 하나를 제공 Codex에 입력하세요.** 실제 과제 지시서와 Clarity Wiki 참고자료 경로를 구분하고, 필수 결과·중요한 질문·실행·검증으로 이어갑니다. 시작 프롬프트는 그 문서에서 관리합니다.
+
+설치·사전 체험·도구 점검이 필요하면 [QUICKSTART의 목적별 안내](QUICKSTART.md#먼저-목적-선택)를 고르세요. 기본 과제 진행에 CLI·MCP 설치나 새 기록 파일 작성이 필수인 것은 아닙니다.
 
 Skill과 로컬 MCP를 함께 설치하려면 과제 작업 폴더에서 `python3 /저장소의/절대경로/tools/install.py --root "$PWD" --check`를 실행합니다. [설치 스크립트](tools/install.py)가 전용 가상환경에 SDK를 설치하고, `--check`로 두 도구를 실제 호출한 뒤 절대 경로의 연결 JSON을 출력합니다. 공개 저장소를 가져오는 명령부터는 [한 번에 설치](QUICKSTART.md#0-skillmcp-한-번에-설치)를 참고하세요. JSON 등록은 제공 MCP 호스트에서 진행합니다.
 
 설치 후 재점검은 `.agents/skills/clarity-wiki/.venv/bin/python .agents/skills/clarity-wiki/tools/check_mcp.py --root "$PWD"`로 실행합니다. [점검 스크립트](skills/clarity-wiki/tools/check_mcp.py)는 합성 파일을 만들고 정리하며, 실제 MCP 초기화·두 도구 호출 결과를 JSON으로 보고합니다. 성공은 종료 코드 `0`, 실패는 `2`입니다. Codex·Cofa의 설정 등록 상태는 별도로 확인해야 합니다.
 
-공개 저장소를 내려받고 저장소 폴더에서 실행합니다.
+참고자료를 아직 받지 않았다면 허용된 과제 작업 폴더에서 아래 명령으로 받습니다. 받은 뒤 과제 작업 폴더를 유지하며 시작 안내를 사용합니다.
 
 ```bash
 git clone https://github.com/dailykim149656-source/clarity-wiki.git
-cd clarity-wiki
 ```
 
-Python 3.10 이상과 POSIX 파일 읽기를 지원하는 macOS/Linux에서 설치 없이 CLI를 실행할 수 있습니다. 작업 파일 경로는 `--root`를 기준으로 해석합니다. Windows의 직접 실행은 현재 지원하지 않습니다.
+아래 CLI 예시는 이 저장소 루트 기준입니다. 과제 폴더에서는 런처를 실제 절대 경로로 지정합니다. Python 3.10 이상과 POSIX 파일 읽기를 지원하는 macOS/Linux에서 설치 없이 CLI를 실행할 수 있습니다. 작업 파일 경로는 `--root`를 기준으로 해석합니다. Windows의 직접 실행은 현재 지원하지 않습니다.
 
 ```bash
 python3 skills/clarity-wiki/tools/validate.py
@@ -38,7 +39,7 @@ mkdir -p .agents/skills
 cp -R /absolute/path/to/clarity-wiki/skills/clarity-wiki .agents/skills/
 ```
 
-Codex에서 `$clarity-wiki README를 읽고 중요한 모호성과 완료 조건을 정리해줘`처럼 호출합니다. Skill 디렉터리 안에 검사 코드도 포함되어 있어 저장소 전체나 pip 설치가 필요하지 않습니다. 현재 풀린 원본 v0.1은 `skills/clarity-wiki/`로 통합했고, v0.2의 간결한 로딩 방식을 반영했습니다.
+설치한 Skill은 Codex에서 `$clarity-wiki`로 호출할 수 있습니다. 실제 과제를 시작할 때는 [시작 프롬프트](START_HERE.md#제공-codex에-넣을-시작-프롬프트)를 사용합니다. Skill 디렉터리 안에 검사 코드도 포함되어 있어 저장소 전체나 pip 설치가 필요하지 않습니다. 현재 풀린 원본 v0.1은 `skills/clarity-wiki/`로 통합했고, v0.2의 간결한 로딩 방식을 반영했습니다.
 
 ## 두 검사 도구
 

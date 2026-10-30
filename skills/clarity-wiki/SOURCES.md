@@ -10,6 +10,7 @@
 | [sumilee-phd/imnotai](https://github.com/sumilee-phd/imnotai) | 웹 기반 분석 및 윤문 서비스 | 다단계 분석/감사라는 검토 관점. 웹 API, Claude/Gemini/Solar 백엔드는 전혀 연결하지 않는다. 원 프로젝트 자체도 epoko77-ai/im-not-ai를 출처로 밝힌다. |
 | [Q00/ouroboros](https://github.com/Q00/ouroboros) | 명세 우선, 소크라테스식 인터뷰와 모호성 관리 | 가정 원장, 중요한 질문 우선, 종료 기준. 원본 Agent OS/MCP 및 자동화 엔진은 사용하지 않는다. |
 | [obra/superpowers](https://github.com/obra/superpowers) | brainstorming, 계획/테스트 절차 | 질문 전 자료 확인, 설계 대안 비교, 구현과 검증의 연결. 강제 승인/다단계 워크플로를 전부 복제하지 않는다. |
+| [zittenyetten/cofa-probe-kit, 8fdd275](https://github.com/zittenyetten/cofa-probe-kit/tree/8fdd275ae33a3ac728093c741ed5fde6efdd1ab4) | 과제·참고자료 경로 구분, 업무 질문·검증 사례, 결정 주체를 구분하는 기록 | 시작 안내와 선택적 기록을 보강했다. 문서·코드·강의 이미지·PDF를 복사하지 않았으며 해당 저장소의 모델·설치 제한을 공식 규정으로 가져오지 않았다. 확인일: 2026-10-31. |
 
 참고 프로젝트 중 일부는 MIT 라이선스를 표기한다. 다만 `malmatch` 최상위에는 확인 시점에 명시적 LICENSE 파일이 없었다. 따라서 포함된 문서와 코드를 별도 허가 없이 재배포하지 않는다. **이 패키지는 외부 프로젝트의 저작물을 번들링하지 않는다.**
 

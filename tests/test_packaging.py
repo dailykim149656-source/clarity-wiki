@@ -43,7 +43,9 @@ class PackagingTests(unittest.TestCase):
             with zipfile.ZipFile(archives[0]) as archive:
                 names = archive.namelist()
                 self.assertIn('clarity-wiki/plugin.json', names)
+                self.assertIn('clarity-wiki/START_HERE.md', names)
                 self.assertIn('clarity-wiki/skills/clarity-wiki/SKILL.md', names)
+                self.assertIn('clarity-wiki/skills/clarity-wiki/examples/workflow-cases.md', names)
                 self.assertIn('clarity-wiki/skills/clarity-wiki/scripts/clarity_wiki/audit.py', names)
                 for name in names:
                     self.assertFalse(any(part.startswith('._') or part in {'.omo', '__pycache__'} for part in Path(name).parts), name)

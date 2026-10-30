@@ -1,8 +1,22 @@
-# Clarity Wiki 사전 체험 빠른 시작
+# Clarity Wiki 빠른 시작
 
-갱신일: 2026-10-30 (Asia/Seoul). 사전 체험에서 설치하고 정상 작동을 확인하는 순서다. **감독 앱·촬영 연결을 먼저 확인한 뒤 Skill과 CLI를 점검한다.** MCP는 시간이 남을 때 [5번의 선택 연결](#5-선택-로컬-mcp-연결)을 확인한다.
+갱신일: 2026-10-31 (Asia/Seoul). 과제 시작과 도구 설치·점검 중 필요한 경로를 고른다. 실제 과제 지시서와 Clarity Wiki 참고자료의 경로를 구분하고 과제 작업 폴더를 유지한다.
 
-필요 환경은 Git, Python 3.10 이상, POSIX 파일 읽기를 지원하는 macOS/Linux다. 제공 Codex는 업데이트하지 않으며 개인 계정·API 키를 연결하지 않는다. 이 문서는 [시험 환경 프로필](skills/clarity-wiki/references/shared/exam-boundaries.md)의 운영 메일·기존 가이드 제한을 함께 따른다.
+## 먼저 목적 선택
+
+| 지금 필요한 것 | 시작 위치 |
+|---|---|
+| 실제 과제 지시서를 읽고 작업 시작 | [START_HERE의 시작 프롬프트](START_HERE.md#제공-codex에-넣을-시작-프롬프트) |
+| Skill만 설치하고 인식·CLI 확인 | [1번 복사 설치](#1-과제-작업-폴더에서-설치) → 2~3번 |
+| Skill·MCP 설치와 두 도구 자동 점검 | [0번 통합 설치](#0-skillmcp-한-번에-설치) |
+| 이미 설치한 MCP 재점검 | [0-1번 점검 명령](#0-1-설치-후-mcp만-다시-점검) |
+| 제공 MCP 호스트에 연결 JSON 등록·호출 확인 | [5번 선택 연결](#5-선택-로컬-mcp-연결) |
+
+과제 시작에는 이미 있는 Skill이나 받은 저장소를 읽어 적용하면 된다. CLI·MCP 설치와 합성 예제 검사는 필요한 도구를 확인하는 선택 경로다. 기록은 과제가 요구한 설명이나 기존 기록에 이어 쓰고 새 기록 파일은 과제·사용자 요청이 있을 때만 만든다.
+
+사전 체험에서는 **감독 연결 → 제공 AI의 실제 지시서 읽기 → 연습 결과 저장·재열기 → 원자료 대조**부터 확인한다. 남은 시간에 필요한 도구만 점검한다. 선택 설치·연결이 한 번 실패하거나 원인 확인에 약 1분이 지나면 반복 설치 대신 가능한 CLI·수동 점검으로 전환하고 미확인 범위를 남긴다. 이 중단 기준은 운영 제안이며 공식 제한 시간이 아니다.
+
+아래 설치·CLI·MCP 경로는 Git, Python 3.10 이상, POSIX 파일 읽기를 지원하는 macOS/Linux를 대상으로 한다. 제공 Codex는 업데이트하지 않으며 개인 계정·API 키를 연결하지 않는다. 이 문서는 [시험 환경 프로필](skills/clarity-wiki/references/shared/exam-boundaries.md)의 운영 메일·기존 가이드 제한을 함께 따른다.
 
 ## 0. Skill·MCP 한 번에 설치
 
@@ -61,14 +75,14 @@ pwd
 python3 --version
 ```
 
-아래 블록을 복사해 실행한다. 공개 저장소를 임시 폴더에 Clone한 뒤 검증한 커밋 `5bc7864`의 Skill을 현재 프로젝트에 복사한다. 별도 pip 설치는 필요 없다. 같은 폴더에서 다시 실행하면 같은 Skill 파일을 덮어쓴다.
+아래 블록을 복사해 실행한다. 공개 저장소의 현재 `main`을 임시 폴더에 Clone한 뒤 Skill을 현재 프로젝트에 복사하고, 실제 받은 커밋을 출력한다. 별도 pip 설치는 필요 없다. 같은 폴더에서 다시 실행하면 같은 Skill 파일을 덮어쓴다.
 
 ```bash
 CW_SETUP_SRC="$(mktemp -d)" &&
-git clone --quiet https://github.com/dailykim149656-source/clarity-wiki.git "$CW_SETUP_SRC" &&
-git -C "$CW_SETUP_SRC" checkout --quiet --detach 5bc7864 &&
+git clone --depth 1 --quiet https://github.com/dailykim149656-source/clarity-wiki.git "$CW_SETUP_SRC" &&
 mkdir -p .agents/skills/clarity-wiki &&
-cp -R "$CW_SETUP_SRC/skills/clarity-wiki/." .agents/skills/clarity-wiki/
+cp -R "$CW_SETUP_SRC/skills/clarity-wiki/." .agents/skills/clarity-wiki/ &&
+git -C "$CW_SETUP_SRC" rev-parse --short HEAD
 ```
 
 프로젝트용 `.agents/skills` 경로와 `$skill-name` 호출은 [Codex 공식 Skill 문서](https://learn.chatgpt.com/docs/build-skills)에 안내되어 있다. 제공 환경의 실제 인식 여부는 다음 단계에서 확인한다.
@@ -294,19 +308,6 @@ MCP 응답이 `isError: true`이거나 실제 호출 기록이 없으면 성공�
 
 ## 6. 본 응시 시작 프롬프트
 
-본 응시에서 새 작업 폴더가 열리면 설치와 인식을 다시 확인한다. 사전 체험의 파일·세션이 유지된다고 가정하지 않는다. 본 과제가 시작된 뒤 아래 프롬프트를 제공 Codex에 입력한다.
-
-```text
-$clarity-wiki
-
-README와 제공 자료, 기존 코드를 먼저 읽어줘.
-필수 산출물과 제출 조건, 검증 가능한 완료 기준을 정리하고,
-자료로 해결되지 않는 중요한 질문만 최대 3개로 추려줘.
-
-답이 필요한 부분과 독립적으로 진행할 일을 구분하고,
-구현 후 실제 테스트와 원자료 대조 근거를 작업 공간에 기록해줘.
-미검증 항목은 완료로 표현하지 말고,
-보고서에서는 수치·단위·조건·주장 강도를 보존해줘.
-```
+본 응시에서 새 작업 폴더가 열리면 실제 과제 지시서와 참고자료 위치, 사용할 Skill·도구의 상태를 확인한다. 사전 체험의 파일·세션이 유지된다고 가정하지 않는다. 시작 문구는 [START_HERE 한 곳](START_HERE.md#제공-codex에-넣을-시작-프롬프트)에서 관리한다. 본 과제가 시작된 뒤 그 문구를 제공 Codex에 입력한다. 이미 시작 요청을 했다면 새 답변·변경 조건만 이어 전달한다.
 
 사전 체험은 1회·15분이다. MCP는 기본 확인 이후 시간이 남고 허용된 설정으로 연결할 수 있을 때 위 5번에 따라 점검하며, 일반적인 설정 설명은 [MCP 사용 안내](docs/USAGE.md#mcp-연결)를 참고한다. 시험에서 사용하는 저장소는 2차 예선 결과 통지 전까지 공개로 유지하고, 시험 파일·결과·작업 이력은 외부 업로드나 Git Push를 하지 않는다. 제출 후 AI 사용 금지 확인 문제에서는 AI 지원을 중단한다.

@@ -1,5 +1,7 @@
 # CLI·MCP 사용 안내
 
+실제 과제 시작은 [START_HERE](../START_HERE.md), 설치·점검 경로 선택은 [QUICKSTART](../QUICKSTART.md#먼저-목적-선택)를 사용합니다. 이 문서는 필요한 CLI·MCP의 실행·연결 방법을 설명합니다.
+
 ## 설치 없는 CLI
 
 Skill을 어느 경로로 복사했든 해당 폴더의 `tools/clarity.py`를 실행하면 됩니다. 입력 경로는 현재 터미널 위치나 manifest 위치가 아닌 `--root` 기준입니다. 예를 들어 작업 폴더가 `/work/project`라면 `reports/manifest.json` 안의 `src/main.py`도 `/work/project/src/main.py`입니다.
@@ -45,7 +47,7 @@ Plugin의 기본 런처는 `--root` 대신 시작 환경의 `CLARITY_WORKSPACE_R
 
 2026-10-30 제공 운영 메일에 따라 사전 체험은 본 응시 시작 전까지 **1회·15분**입니다. 실제 응시 기기·장소에서 Chrome을 사용하고, 감독 연결·촬영 설정부터 응시자가 직접 확인합니다. 블루투스 키보드·마우스는 사용할 수 없으며, 휴대폰은 안정적인 Wi-Fi와 충전을 준비합니다. 상세 조건과 출처는 [시험 환경 프로필](../skills/clarity-wiki/references/shared/exam-boundaries.md)을 따릅니다.
 
-감독 준비 후 Skill 인식과 설치 없는 CLI를 확인하는 순서를 권합니다. 아래는 Clone한 저장소 루트에서 실행하는 **합성 예제 구조 점검**이며 실제 업무 검증 결과가 아닙니다.
+감독 준비 후 제공 AI의 실제 지시서 읽기, 연습 결과 저장·재열기와 원자료 대조를 먼저 확인합니다. 남은 시간에 필요한 Skill·CLI·MCP만 점검합니다. 아래는 Clone한 저장소 루트에서 실행하는 **합성 예제 구조 점검**이며 실제 업무 검증 결과가 아닙니다.
 
 ```bash
 python3 skills/clarity-wiki/tools/validate.py
