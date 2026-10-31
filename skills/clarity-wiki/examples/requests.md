@@ -4,13 +4,14 @@
 
 | 요청 | 주 문서 | 조건부 문서 | 기대 행동 |
 |---|---|---|---|
-| README의 모호성을 줄이고 완료 조건 작성 | `references/workflow.md` | 없음 | 자료부터 확인, 질문 최대 3개, 가정 표시 |
+| README의 모호성을 줄이고 완료 조건 작성 | `references/workflow.md` | 없음 | 자료부터 확인, 한 차례에 질문 최대 3개, 가정 표시 |
+| 실제 지시서·스키마에서 시나리오 에이전트에게 확인할 업무 질문 작성 | `references/workflow.md` | `references/scenario-questions.md` | 미답변만 질문 초안 작성, 참가자 직접 전달, 실제 답변만 규칙·검증으로 연결 |
 | 근거 manifest의 누락 확인 | `references/workflow.md` | `references/local-checks.md` | 실제 파일 검사와 도구 한계 설명 |
 | 제한된 시험 환경에서 작업 정리 | `references/workflow.md` | `references/shared/exam-boundaries.md` | 공식 조건과 운영 선택 분리 |
 | 기술 보고서의 숫자와 주장을 그대로 윤문 | `references/rewrite/technical.md` | 필요 시 `references/rewrite/fidelity.md` | 주장 유지, 검토 의견 분리 |
 | 짧은 글의 말투 유지 | `references/rewrite/quick.md` | 없음 | 문제 구절만 수정 |
 | 캐릭터 대사의 존대 일관성 검수 | `references/rewrite/dialogue.md` | 없음 | 원래 관계와 의도 유지 |
-| 심층 기획을 함께 진행 | `references/plan/deep.md` | 필요 시 `references/plan/contract.md` | 핵심 질문 최대 3개 후 가정과 계약 정리 |
+| 심층 기획을 함께 진행 | `references/plan/deep.md` | 필요 시 `references/plan/contract.md` | 한 차례에 핵심 질문 최대 3개 후 가정과 계약 정리 |
 | 설계의 반례만 검토 | `references/plan/stress.md` | 없음 | 실제 반례와 가상 시나리오 구분 |
 
 ## 윤문: 주장과 검토 의견 분리

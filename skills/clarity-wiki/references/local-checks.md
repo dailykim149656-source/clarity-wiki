@@ -52,4 +52,4 @@ python3 '<SKILL_DIR>/tools/clarity.py' evidence --root '<SKILL_DIR>/examples/evi
 - 해시는 기록한 파일의 변경 여부만 확인한다. 누락한 의존 파일, 조작한 로그, 거짓 명령·종료 코드, 사람이 확인했다는 주장을 입증하지 않는다.
 - `no_findings`는 의미 정확성, 업무 정답, 실험 재현 또는 사람 검토를 보장하지 않는다.
 
-선택적 stdio MCP의 `audit_revision`, `check_evidence`는 같은 검사 core와 결과를 사용하며 시작 시 지정한 작업 공간에 고정된다. MCP 불가 시 CLI, CLI 불가 시 수동 대조를 사용하고 자동 검사 미수행을 기록한다. 수동 확인 기록은 성공한 명령 로그로 꾸미지 않는다.
+CLI 불가 시 수동 대조를 사용하고 자동 검사 미수행을 기록한다. 수동 확인 기록은 성공한 명령 로그로 꾸미지 않는다.

@@ -1,6 +1,7 @@
 import contextlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -14,7 +15,7 @@ INSTALLER = Path(__file__).resolve().parents[1] / 'tools/install.py'
 
 class InstallTests(unittest.TestCase):
     def setUp(self):
-        self.assertTrue(INSTALLER.is_file(), 'The Skill/MCP installer is missing')
+        self.assertTrue(INSTALLER.is_file(), 'The Skill/CLI installer is missing')
         spec = importlib.util.spec_from_file_location('clarity_installer', INSTALLER)
         self.installer = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.installer)
@@ -58,7 +59,7 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(sentinel.read_text(), 'keep')
         self.assertFalse((self.destination / 'SKILL.md').exists())
 
-    def test_reuses_python_314_venv_alias(self):
+    def test_preserves_legacy_python_314_venv_alias(self):
         self.installer.install_skill(self.source, self.root)
         binaries = self.destination / '.venv/bin'
         binaries.mkdir(parents=True)
@@ -86,33 +87,18 @@ class InstallTests(unittest.TestCase):
             self.installer.install_skill(self.source, self.root)
         self.assertEqual(target.read_text(), 'keep')
 
-    def test_rejects_redirected_venv_directory(self):
+    def test_repeat_install_preserves_redirected_legacy_venv(self):
         self.installer.install_skill(self.source, self.root)
-        outside = self.base / 'other venv'
+        outside = self.base / 'legacy venv'
         outside.mkdir()
+        sentinel = outside / 'pyvenv.cfg'
+        sentinel.write_text('legacy configuration', encoding='utf-8')
         (self.destination / '.venv').symlink_to(outside, target_is_directory=True)
-        with self.assertRaises(self.installer.InstallError):
-            self.installer.install_skill(self.source, self.root)
-        self.assertEqual(list(outside.iterdir()), [])
-
-    def test_redirected_venv_config_cannot_overwrite_external_file(self):
+        (self.source / 'tools/validate.py').write_text('print("updated")\n', encoding='utf-8')
         self.installer.install_skill(self.source, self.root)
-        environment = self.destination / '.venv'
-        environment.mkdir()
-        sentinel = self.base / 'outside config.txt'
-        sentinel.write_text('keep external config', encoding='utf-8')
-        (environment / 'pyvenv.cfg').symlink_to(sentinel)
-
-        def allow_venv_without_network(command, timeout=180):
-            if command[1:3] == ['-m', 'venv']:
-                subprocess.run(command, check=True, capture_output=True, timeout=60)
-            else:
-                raise self.installer.InstallError('Stop before package download')
-
-        with patch.object(self.installer, '_run', side_effect=allow_venv_without_network), \
-                self.assertRaises(self.installer.InstallError):
-            self.installer.install_mcp(self.destination)
-        self.assertEqual(sentinel.read_text(), 'keep external config')
+        self.assertTrue((self.destination / '.venv').is_symlink())
+        self.assertEqual(sentinel.read_text(), 'legacy configuration')
+        self.assertEqual((self.destination / 'tools/validate.py').read_text(), 'print("updated")\n')
 
     def test_rejects_source_destination_overlap(self):
         with self.assertRaises(self.installer.InstallError):
@@ -136,51 +122,93 @@ class InstallTests(unittest.TestCase):
             self.installer.install_skill(self.source, self.root)
         self.assertFalse(self.destination.exists())
 
-    def test_config_uses_absolute_venv_path_without_resolving_interpreter(self):
+    def test_fresh_and_repeat_install_run_bundled_cli_without_site_packages(self):
+        (self.root / 'old.txt').write_text('온도 -5°C', encoding='utf-8')
+        (self.root / 'new.txt').write_text('온도 5°C', encoding='utf-8')
+        config = self.root / '.codex/config.toml'
+        config.parent.mkdir()
+        config.write_text('# existing host settings\n', encoding='utf-8')
+        for attempt in range(2):
+            with self.subTest(attempt=attempt):
+                result = subprocess.run(
+                    [sys.executable, '-I', '-S', str(INSTALLER), '--root', str(self.root)],
+                    cwd=self.base, capture_output=True, text=True, timeout=30,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(result.stdout, '')
+                self.assertIn('Skill and bundled CLI validated', result.stderr)
+                self.assertEqual(config.read_text(), '# existing host settings\n')
+                self.assertEqual((self.root / 'old.txt').read_text(), '온도 -5°C')
+                for relative in ['.venv', 'tools/mcp_server.py', 'tools/check_mcp.py',
+                                 'scripts/clarity_wiki/mcp_server.py']:
+                    self.assertFalse((self.destination / relative).exists(), relative)
+                cli = [sys.executable, '-I', '-S', str(self.destination / 'tools/clarity.py')]
+                version = subprocess.run(cli + ['--version'], cwd=self.base,
+                                         capture_output=True, text=True, timeout=10)
+                self.assertEqual(version.returncode, 0, version.stderr)
+                self.assertEqual(version.stdout.strip(), '0.4.0')
+                audit = subprocess.run(cli + ['audit', '--root', str(self.root),
+                                             '--original', 'old.txt', '--revised', 'new.txt'],
+                                       cwd=self.base, capture_output=True, text=True, timeout=10)
+                self.assertEqual(audit.returncode, 1, audit.stderr)
+                self.assertEqual(json.loads(audit.stdout)['status'], 'findings')
+                evidence = subprocess.run(cli + ['evidence', '--root', str(self.destination / 'examples/evidence'),
+                                                '--manifest', 'manifest.json'],
+                                          cwd=self.base, capture_output=True, text=True, timeout=10)
+                self.assertEqual(evidence.returncode, 0, evidence.stdout + evidence.stderr)
+                self.assertEqual(json.loads(evidence.stdout)['status'], 'no_findings')
+                note = self.destination / 'notes.txt'
+                if attempt == 0:
+                    note.write_text('personal note', encoding='utf-8')
+                    (self.destination / 'tools/clarity.py').write_text('stale copy', encoding='utf-8')
+                else:
+                    self.assertEqual(note.read_text(), 'personal note')
+
+    def test_repeat_install_does_not_purge_unmanaged_legacy_files(self):
         self.installer.install_skill(self.source, self.root)
-        (self.destination / '.venv/bin').mkdir(parents=True)
-        interpreter = self.destination / '.venv/bin/python'
-        interpreter.symlink_to(sys.executable)
-        settings = self.installer.mcp_config(self.root, self.destination)['mcpServers']['clarity-wiki']
-        self.assertEqual(settings['command'], str(interpreter))
-        self.assertEqual(settings['args'], [str(self.destination / 'tools/mcp_server.py'), '--root', str(self.root)])
+        legacy = self.destination / 'tools/mcp_server.py'
+        legacy.write_text('# pre-existing installation\n', encoding='utf-8')
+        self.installer.install_skill(self.source, self.root)
+        self.assertEqual(legacy.read_text(), '# pre-existing installation\n')
 
-    def test_sdk_failure_produces_no_success_json_and_keeps_skill(self):
-        stdout, stderr = io.StringIO(), io.StringIO()
-        with patch.object(self.installer, 'SOURCE_SKILL', self.source), \
-                patch.object(self.installer, 'install_mcp', side_effect=self.installer.InstallError('SDK unavailable')), \
-                contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-            code = self.installer.main(['--root', str(self.root)])
-        self.assertEqual(code, 2)
-        self.assertEqual(stdout.getvalue(), '')
-        self.assertIn('SDK unavailable', stderr.getvalue())
-        self.assertTrue((self.destination / 'SKILL.md').is_file())
-
-    def test_failed_post_install_check_produces_no_connection_json(self):
-        (self.source / 'tools/check_mcp.py').write_text(
-            'from pathlib import Path\nPath(__file__).with_suffix(".ran").write_text("called")\nraise SystemExit(2)\n',
-            encoding='utf-8')
+    def test_failed_validation_returns_failure_without_success_output(self):
+        (self.source / 'tools/validate.py').write_text('raise SystemExit(1)\n', encoding='utf-8')
         stdout = io.StringIO()
         with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as stderr, \
                 patch.object(self.installer, 'SOURCE_SKILL', self.source), \
-                patch.object(self.installer, 'install_mcp', return_value=Path(sys.executable)), \
                 contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-            code = self.installer.main(['--root', str(self.root), '--check'])
+            code = self.installer.main(['--root', str(self.root)])
             stderr.seek(0)
             message = stderr.read()
         self.assertEqual(code, 2)
         self.assertEqual(stdout.getvalue(), '')
         self.assertIn('Installation failed', message)
-        self.assertTrue((self.destination / 'tools/check_mcp.ran').is_file())
+        self.assertNotIn('Skill and bundled CLI validated', message)
         self.assertTrue((self.destination / 'SKILL.md').is_file())
+        self.assertFalse((self.destination / '.venv').exists())
 
-    def test_invalid_workspace_produces_no_json(self):
+    def test_invalid_workspace_produces_no_success_output(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
             code = self.installer.main(['--root', str(self.root / 'missing')])
         self.assertEqual(code, 2)
         self.assertEqual(stdout.getvalue(), '')
         self.assertTrue(stderr.getvalue())
+
+    def test_broken_bundled_cli_returns_failure_after_skill_validation(self):
+        (self.source / 'tools/clarity.py').write_text('raise SystemExit(7)\n', encoding='utf-8')
+        stdout = io.StringIO()
+        with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as stderr, \
+                patch.object(self.installer, 'SOURCE_SKILL', self.source), \
+                contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            code = self.installer.main(['--root', str(self.root)])
+            stderr.seek(0)
+            message = stderr.read()
+        self.assertEqual(code, 2)
+        self.assertEqual(stdout.getvalue(), '')
+        self.assertIn('fixture validation', message)
+        self.assertIn('Installation failed', message)
+        self.assertNotIn('Skill and bundled CLI validated', message)
 
 
 if __name__ == '__main__':

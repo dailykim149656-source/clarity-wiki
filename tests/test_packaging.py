@@ -1,4 +1,4 @@
-import json
+import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -21,15 +21,6 @@ class PackagingTests(unittest.TestCase):
                                     cwd=directory, capture_output=True, text=True, timeout=10)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_plugin_manifest_has_only_local_stdio_transport(self):
-        plugin = json.loads((REPO / 'plugin.json').read_text())
-        self.assertEqual(plugin['name'], 'clarity-wiki')
-        self.assertEqual(plugin['version'], '0.3.0')
-        mcp = json.loads((REPO / 'mcp.json').read_text())['mcpServers']
-        self.assertEqual(list(mcp), ['clarity-wiki'])
-        self.assertEqual(mcp['clarity-wiki']['type'], 'stdio')
-        self.assertNotIn('url', mcp['clarity-wiki'])
-
     def test_release_is_reproducible_and_excludes_local_material(self):
         with tempfile.TemporaryDirectory() as directory:
             archives = []
@@ -38,18 +29,23 @@ class PackagingTests(unittest.TestCase):
                 result = subprocess.run([sys.executable, str(REPO / 'tools/build_release.py'), '--output', str(target)],
                                         capture_output=True, text=True, timeout=10)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(target.with_suffix('.zip.sha256').read_text(),
+                                 f'{hashlib.sha256(target.read_bytes()).hexdigest()}  {target.name}\n')
                 archives.append(target)
             self.assertEqual(archives[0].read_bytes(), archives[1].read_bytes())
             with zipfile.ZipFile(archives[0]) as archive:
                 names = archive.namelist()
-                self.assertIn('clarity-wiki/plugin.json', names)
+                self.assertNotIn('clarity-wiki/plugin.json', names)
+                self.assertNotIn('clarity-wiki/mcp.json', names)
                 self.assertIn('clarity-wiki/START_HERE.md', names)
                 self.assertIn('clarity-wiki/skills/clarity-wiki/SKILL.md', names)
                 self.assertIn('clarity-wiki/skills/clarity-wiki/examples/workflow-cases.md', names)
+                self.assertIn('clarity-wiki/skills/clarity-wiki/references/scenario-questions.md', names)
                 self.assertIn('clarity-wiki/skills/clarity-wiki/scripts/clarity_wiki/audit.py', names)
                 for name in names:
                     self.assertFalse(any(part.startswith('._') or part in {'.omo', '__pycache__'} for part in Path(name).parts), name)
                     self.assertNotIn('author-default.md', name)
+                    self.assertNotIn('mcp', Path(name).name.lower())
                     self.assertNotIn('.egg-info', name)
                     self.assertFalse(name.endswith(('.pdf', '.zip', '.pyc')), name)
                 archive.extractall(Path(directory) / 'extracted')
@@ -57,6 +53,17 @@ class PackagingTests(unittest.TestCase):
             result = subprocess.run([sys.executable, str(extracted / 'skills/clarity-wiki/tools/validate.py')],
                                     cwd=directory, capture_output=True, text=True, timeout=10)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            workspace = Path(directory) / 'new project'
+            workspace.mkdir()
+            result = subprocess.run([sys.executable, '-I', '-S', str(extracted / 'tools/install.py'),
+                                     '--root', str(workspace)],
+                                    cwd=directory, capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            cli = workspace / '.agents/skills/clarity-wiki/tools/clarity.py'
+            result = subprocess.run([sys.executable, '-I', '-S', str(cli), '--version'],
+                                    cwd=directory, capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), '0.4.0')
 
 
 if __name__ == '__main__':

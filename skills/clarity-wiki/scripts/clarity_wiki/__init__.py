@@ -1,3 +1,3 @@
-"""Local, read-only clarity checks shared by CLI and MCP."""
+"""Local, read-only clarity checks for the CLI and Skill."""
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'

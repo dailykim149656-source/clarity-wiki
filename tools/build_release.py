@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a reproducible source/plugin ZIP from explicit public directories."""
+"""Build a reproducible CLI/Skill ZIP from explicit public directories."""
 
 import argparse
 import hashlib
@@ -7,7 +7,7 @@ from pathlib import Path
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = ['README.md', 'START_HERE.md', 'QUICKSTART.md', 'LICENSE', 'pyproject.toml', 'plugin.json', 'mcp.json',
+FILES = ['README.md', 'START_HERE.md', 'QUICKSTART.md', 'LICENSE', 'pyproject.toml',
          'tools/build_release.py', 'tools/install.py', 'docs/USAGE.md', 'docs/VERIFICATION.md']
 
 
@@ -32,7 +32,7 @@ def public_files():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, default=ROOT / 'dist/clarity-wiki-0.3.0.zip')
+    parser.add_argument('--output', type=Path, default=ROOT / 'dist/clarity-wiki-0.4.0.zip')
     args = parser.parse_args()
     files = public_files()
     args.output.parent.mkdir(parents=True, exist_ok=True)
